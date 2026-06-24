@@ -15,7 +15,7 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     this.addSettingTab(new GraphScrollPanSettingTab(this.app, this));
 
-    // 이미 떠 있는 그래프 + 이후 새로 열리는 그래프 모두 패치
+    // Patch graphs that are already open as well as any opened later.
     this.app.workspace.onLayoutReady(() => this.patchAllGraphLeaves());
     this.registerEvent(
       this.app.workspace.on("layout-change", () => this.patchAllGraphLeaves())
@@ -46,7 +46,8 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
       return;
     }
 
-    // 캔버스의 부모(containerEl)에 capture 단계로 붙여 네이티브 onWheel 보다 먼저 가로챈다.
+    // Attach to the canvas parent (containerEl) in the capture phase so we run
+    // before the renderer's native onWheel handler on the canvas itself.
     const target = renderer.containerEl || view.containerEl;
     if (!target) {
       return;
@@ -66,12 +67,13 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
   }
 
   onWheel(e, renderer) {
-    // 핀치 제스처(macOS는 ctrlKey 붙은 wheel로 들어옴) 또는 Cmd/Ctrl+스크롤 → 네이티브 줌에 위임
+    // Pinch gestures (macOS delivers them as ctrlKey wheel events) or
+    // Cmd/Ctrl+scroll: defer to the native zoom behavior.
     if (e.ctrlKey || e.metaKey) {
       return;
     }
 
-    // 일반 스크롤(두 손가락 스와이프) → 이동으로 처리하고 네이티브 줌 차단
+    // Plain scroll (two-finger swipe): pan instead, and block the native zoom.
     e.preventDefault();
     e.stopImmediatePropagation();
 
@@ -103,8 +105,8 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName("이동 속도")
-      .setDesc("스크롤 시 그래프가 움직이는 배율입니다. (기본 1.0)")
+      .setName("Pan speed")
+      .setDesc("Multiplier for how far the graph moves per scroll. (default 1.0)")
       .addSlider((slider) =>
         slider
           .setLimits(0.2, 3.0, 0.1)
@@ -117,7 +119,8 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("가로 방향 반전")
+      .setName("Invert horizontal")
+      .setDesc("Flip the horizontal pan direction.")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.invertX).onChange(async (value) => {
           this.plugin.settings.invertX = value;
@@ -126,7 +129,8 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("세로 방향 반전")
+      .setName("Invert vertical")
+      .setDesc("Flip the vertical pan direction.")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.invertY).onChange(async (value) => {
           this.plugin.settings.invertY = value;
