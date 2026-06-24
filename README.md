@@ -16,13 +16,16 @@ By default, scrolling over the graph view zooms in and out, and panning requires
 
 On macOS, trackpad pinch gestures arrive as `Ctrl`-modified wheel events, so pinch-to-zoom works automatically. Zooming uses Obsidian's native zoom, so it stays centered on the cursor exactly as before.
 
+Optional **`+` / `−` zoom buttons** are shown in the bottom-right corner of the graph for zooming without a gesture.
+
 Works in both the global **Graph view** and the **Local graph** view.
 
 ## Settings
 
 - **Pan speed** — multiplier for how far the graph moves per scroll (default `1.0`).
-- **Invert X** — flip the horizontal pan direction.
-- **Invert Y** — flip the vertical pan direction.
+- **Invert horizontal** — flip the horizontal pan direction.
+- **Invert vertical** — flip the vertical pan direction.
+- **Show zoom buttons** — show the `+` / `−` buttons over the graph (default on).
 
 ## Installation
 
@@ -34,7 +37,7 @@ Works in both the global **Graph view** and the **Local graph** view.
 
 ### Manual
 
-1. Download `main.js` and `manifest.json` from the latest [release](../../releases).
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [release](../../releases).
 2. Copy them into `<your vault>/.obsidian/plugins/graph-scroll-pan/`.
 3. Reload Obsidian and enable the plugin in **Settings → Community plugins**.
 

@@ -1,0 +1,31 @@
+.graph-scroll-pan-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: var(--layer-popover);
+}
+
+.graph-scroll-pan-zoom-button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-s);
+}
+
+.graph-scroll-pan-zoom-button:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}

@@ -4,10 +4,14 @@ const { Plugin, PluginSettingTab, Setting } = require("obsidian");
 
 const GRAPH_VIEW_TYPES = ["graph", "localgraph"];
 
+// Multiplier applied to the target scale per zoom-button click.
+const ZOOM_STEP = 1.2;
+
 const DEFAULT_SETTINGS = {
   panSpeed: 1.0,
   invertX: false,
   invertY: false,
+  showZoomButtons: true,
 };
 
 module.exports = class GraphScrollPanPlugin extends Plugin {
@@ -64,6 +68,10 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     };
     view._graphScrollPanCleanup = cleanup;
     this.register(cleanup);
+
+    if (this.settings.showZoomButtons) {
+      this.addZoomControls(target, renderer);
+    }
   }
 
   onWheel(e, renderer) {
@@ -90,6 +98,42 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     const dy = e.deltaY * dpr * speed * signY;
 
     renderer.setPan(renderer.panX - dx, renderer.panY - dy);
+    renderer.changed();
+  }
+
+  addZoomControls(container, renderer) {
+    const controls = document.createElement("div");
+    controls.addClass("graph-scroll-pan-controls");
+
+    const makeButton = (label, ariaLabel, factor) => {
+      const btn = document.createElement("button");
+      btn.addClass("graph-scroll-pan-zoom-button");
+      btn.textContent = label;
+      btn.setAttribute("aria-label", ariaLabel);
+      // Stop the press from starting a graph drag underneath.
+      btn.addEventListener("mousedown", (e) => e.stopPropagation());
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.zoomBy(renderer, factor);
+      });
+      controls.appendChild(btn);
+    };
+
+    makeButton("+", "Zoom in", ZOOM_STEP);
+    makeButton("−", "Zoom out", 1 / ZOOM_STEP);
+
+    container.appendChild(controls);
+    this.register(() => controls.remove());
+  }
+
+  zoomBy(renderer, factor) {
+    if (!renderer.px) {
+      return;
+    }
+
+    // Omitting the center makes the renderer zoom around the view center,
+    // and updateZoom() animates the transition smoothly.
+    renderer.zoomTo(renderer.targetScale * factor);
     renderer.changed();
   }
 };
@@ -136,6 +180,18 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
           this.plugin.settings.invertY = value;
           await this.plugin.saveData(this.plugin.settings);
         })
+      );
+
+    new Setting(containerEl)
+      .setName("Show zoom buttons")
+      .setDesc("Show + / − zoom buttons over the graph. Reopen the graph view to apply.")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.showZoomButtons)
+          .onChange(async (value) => {
+            this.plugin.settings.showZoomButtons = value;
+            await this.plugin.saveData(this.plugin.settings);
+          })
       );
   }
 }
