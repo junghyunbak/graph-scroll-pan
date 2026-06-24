@@ -7,13 +7,17 @@ const GRAPH_VIEW_TYPES = ["graph", "localgraph"];
 // Multiplier applied to the target scale per zoom-button click.
 const ZOOM_STEP = 1.2;
 
-// Per-event zoom multiplier for Cmd/Ctrl+scroll and pinch. Tuned so a typical
-// mouse-wheel notch (deltaY ≈ 100) lands close to one ZOOM_STEP, while a
-// trackpad pinch (small deltaY) stays smooth.
-const ZOOM_WHEEL_SENSITIVITY = 0.0018;
+// Per-event zoom multiplier. A mouse wheel reports large deltas (≈100 per
+// notch), while a trackpad pinch reports tiny ones (a few px), so a single
+// constant makes the pinch feel sluggish. We pick the sensitivity by delta
+// magnitude: small deltas (pinch / trackpad) get a much higher multiplier.
+const ZOOM_WHEEL_SENSITIVITY = 0.0018; // large deltas (mouse wheel notch)
+const ZOOM_PINCH_SENSITIVITY = 0.01;   // small deltas (trackpad pinch)
+const FINE_ZOOM_DELTA = 40;            // |deltaY| below this counts as a fine gesture
 
 const DEFAULT_SETTINGS = {
   panSpeed: 1.0,
+  zoomSpeed: 1.0,
   invertX: false,
   invertY: false,
   showZoomButtons: true,
@@ -92,7 +96,14 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
       e.preventDefault();
       e.stopImmediatePropagation();
 
-      const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+      // Small deltas (trackpad pinch / two-finger gesture) need a higher
+      // multiplier than a coarse mouse-wheel notch to feel responsive.
+      const fine = Math.abs(e.deltaY) < FINE_ZOOM_DELTA;
+      const sensitivity =
+        (fine ? ZOOM_PINCH_SENSITIVITY : ZOOM_WHEEL_SENSITIVITY) *
+        this.settings.zoomSpeed;
+
+      const factor = Math.exp(-e.deltaY * sensitivity);
       renderer.zoomTo(renderer.targetScale * factor);
       renderer.changed();
       return;
@@ -171,6 +182,20 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.settings.panSpeed = value;
+            await this.plugin.saveData(this.plugin.settings);
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Zoom speed")
+      .setDesc("Multiplier for pinch and Cmd/Ctrl+scroll zoom. Raise it if pinch feels too slow. (default 1.0)")
+      .addSlider((slider) =>
+        slider
+          .setLimits(0.2, 3.0, 0.1)
+          .setValue(this.plugin.settings.zoomSpeed)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.settings.zoomSpeed = value;
             await this.plugin.saveData(this.plugin.settings);
           })
       );
