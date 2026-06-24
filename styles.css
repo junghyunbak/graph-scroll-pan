@@ -1,7 +1,7 @@
 .graph-scroll-pan-controls {
   position: absolute;
   right: 12px;
-  bottom: 12px;
+  bottom: 48px;
   display: flex;
   flex-direction: column;
   gap: 4px;
