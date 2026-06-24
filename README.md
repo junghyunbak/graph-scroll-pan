@@ -16,7 +16,7 @@ By default, scrolling over the graph view zooms in and out, and panning requires
 | Pinch | Zoom in / out |
 | Cmd/Ctrl + scroll | Zoom in / out |
 
-On macOS, trackpad pinch gestures arrive as `Ctrl`-modified wheel events, so pinch-to-zoom works automatically. Zooming uses Obsidian's native zoom, so it stays centered on the cursor exactly as before.
+On macOS, trackpad pinch gestures arrive as `Ctrl`-modified wheel events, so pinch-to-zoom works automatically. Zooming — pinch, `Cmd`/`Ctrl` + scroll, and the `+` / `−` buttons — is anchored to the center of the view, so the graph stays put instead of drifting toward the cursor.
 
 Optional **`+` / `−` zoom buttons** are shown in the bottom-right corner of the graph for zooming without a gesture.
 

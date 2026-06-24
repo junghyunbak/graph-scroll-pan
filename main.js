@@ -7,6 +7,11 @@ const GRAPH_VIEW_TYPES = ["graph", "localgraph"];
 // Multiplier applied to the target scale per zoom-button click.
 const ZOOM_STEP = 1.2;
 
+// Per-event zoom multiplier for Cmd/Ctrl+scroll and pinch. Tuned so a typical
+// mouse-wheel notch (deltaY ≈ 100) lands close to one ZOOM_STEP, while a
+// trackpad pinch (small deltaY) stays smooth.
+const ZOOM_WHEEL_SENSITIVITY = 0.0018;
+
 const DEFAULT_SETTINGS = {
   panSpeed: 1.0,
   invertX: false,
@@ -75,19 +80,27 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
   }
 
   onWheel(e, renderer) {
+    if (!renderer.px) {
+      return;
+    }
+
     // Pinch gestures (macOS delivers them as ctrlKey wheel events) or
-    // Cmd/Ctrl+scroll: defer to the native zoom behavior.
+    // Cmd/Ctrl+scroll: zoom around the view center instead of deferring to the
+    // native cursor-anchored zoom, which drifts the graph when the cursor is
+    // off-center. This keeps zooming consistent with the + / − buttons.
     if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+      renderer.zoomTo(renderer.targetScale * factor);
+      renderer.changed();
       return;
     }
 
     // Plain scroll (two-finger swipe): pan instead, and block the native zoom.
     e.preventDefault();
     e.stopImmediatePropagation();
-
-    if (!renderer.px) {
-      return;
-    }
 
     const dpr = window.devicePixelRatio || 1;
     const speed = this.settings.panSpeed;
