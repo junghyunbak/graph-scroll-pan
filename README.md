@@ -25,6 +25,7 @@ Works in both the global **Graph view** and the **Local graph** view.
 ## Settings
 
 - **Pan speed** — multiplier for how far the graph moves per scroll (default `1.0`).
+- **Zoom speed** — multiplier for pinch and `Cmd`/`Ctrl` + scroll zoom; raise it if pinch feels too slow (default `1.0`).
 - **Invert horizontal** — flip the horizontal pan direction.
 - **Invert vertical** — flip the vertical pan direction.
 - **Show zoom buttons** — show the `+` / `−` buttons over the graph (default on).
