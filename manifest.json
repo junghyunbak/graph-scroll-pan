@@ -1,0 +1,10 @@
+{
+  "id": "graph-scroll-pan",
+  "name": "Graph Scroll Pan",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Pan the graph view by scrolling instead of zooming. Zoom with pinch or Cmd/Ctrl+scroll. Great for trackpad users.",
+  "author": "Jeonghyeon Park",
+  "authorUrl": "https://github.com/junghyunbak",
+  "isDesktopOnly": true
+}
