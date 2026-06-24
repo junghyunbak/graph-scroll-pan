@@ -2,6 +2,8 @@
 
 An Obsidian plugin that makes the **graph view** pan when you scroll, instead of zooming. Zooming is moved to **pinch** or **Cmd/Ctrl + scroll** — the same convention used by design and map apps. Built with trackpad users in mind.
 
+![Graph Scroll Pan demo](demo.gif)
+
 ## Why
 
 By default, scrolling over the graph view zooms in and out, and panning requires click-and-dragging. If you prefer scrolling (or a two-finger trackpad swipe) to move around the graph — like in Figma or a maps app — this plugin swaps the behavior.
