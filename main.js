@@ -18,6 +18,7 @@ const FINE_ZOOM_DELTA = 40;            // |deltaY| below this counts as a fine g
 const DEFAULT_SETTINGS = {
   panSpeed: 1.0,
   zoomSpeed: 1.0,
+  zoomToCursor: true,
   invertX: false,
   invertY: false,
   showZoomButtons: true,
@@ -89,9 +90,9 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     }
 
     // Pinch gestures (macOS delivers them as ctrlKey wheel events) or
-    // Cmd/Ctrl+scroll: zoom around the view center instead of deferring to the
-    // native cursor-anchored zoom, which drifts the graph when the cursor is
-    // off-center. This keeps zooming consistent with the + / − buttons.
+    // Cmd/Ctrl+scroll: drive the renderer's own zoom. Passing a center point
+    // keeps that point fixed (zoom toward the cursor); omitting it zooms around
+    // the view center.
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       e.stopImmediatePropagation();
@@ -104,7 +105,22 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
         this.settings.zoomSpeed;
 
       const factor = Math.exp(-e.deltaY * sensitivity);
-      renderer.zoomTo(renderer.targetScale * factor);
+      const targetScale = renderer.targetScale * factor;
+
+      if (this.settings.zoomToCursor && e.currentTarget) {
+        // Cursor position inside the canvas, in device pixels (the renderer's
+        // coordinate space).
+        const dpr = window.devicePixelRatio || 1;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const center = {
+          x: (e.clientX - rect.left) * dpr,
+          y: (e.clientY - rect.top) * dpr,
+        };
+        renderer.zoomTo(targetScale, center);
+      } else {
+        renderer.zoomTo(targetScale);
+      }
+
       renderer.changed();
       return;
     }
@@ -196,6 +212,18 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.settings.zoomSpeed = value;
+            await this.plugin.saveData(this.plugin.settings);
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Zoom to cursor")
+      .setDesc("Zoom toward the mouse pointer instead of the view center.")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.zoomToCursor)
+          .onChange(async (value) => {
+            this.plugin.settings.zoomToCursor = value;
             await this.plugin.saveData(this.plugin.settings);
           })
       );

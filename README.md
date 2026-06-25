@@ -16,7 +16,7 @@ By default, scrolling over the graph view zooms in and out, and panning requires
 | Pinch | Zoom in / out |
 | Cmd/Ctrl + scroll | Zoom in / out |
 
-On macOS, trackpad pinch gestures arrive as `Ctrl`-modified wheel events, so pinch-to-zoom works automatically. Zooming — pinch, `Cmd`/`Ctrl` + scroll, and the `+` / `−` buttons — is anchored to the center of the view, so the graph stays put instead of drifting toward the cursor.
+On macOS, trackpad pinch gestures arrive as `Ctrl`-modified wheel events, so pinch-to-zoom works automatically. Pinch and `Cmd`/`Ctrl` + scroll zoom toward the mouse pointer (turn off **Zoom to cursor** to zoom around the view center instead); the `+` / `−` buttons always zoom around the center.
 
 Optional **`+` / `−` zoom buttons** are shown in the bottom-right corner of the graph for zooming without a gesture.
 
@@ -26,6 +26,7 @@ Works in both the global **Graph view** and the **Local graph** view.
 
 - **Pan speed** — multiplier for how far the graph moves per scroll (default `1.0`).
 - **Zoom speed** — multiplier for pinch and `Cmd`/`Ctrl` + scroll zoom; raise it if pinch feels too slow (default `1.0`).
+- **Zoom to cursor** — zoom toward the mouse pointer instead of the view center (default on).
 - **Invert horizontal** — flip the horizontal pan direction.
 - **Invert vertical** — flip the vertical pan direction.
 - **Show zoom buttons** — show the `+` / `−` buttons over the graph (default on).
