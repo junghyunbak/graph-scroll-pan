@@ -180,7 +180,10 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     }
     e.preventDefault();
     e.stopImmediatePropagation();
-    this._drag = { renderer, lastX: e.clientX, lastY: e.clientY };
+    // The renderer binds pointer/hover handling to interactiveEl (fall back to
+    // the canvas) — that's where a synthetic move must be dispatched.
+    const hoverEl = renderer.interactiveEl || (renderer.px && renderer.px.view);
+    this._drag = { renderer, hoverEl, lastX: e.clientX, lastY: e.clientY };
   }
 
   onDragMove(e) {
@@ -203,7 +206,25 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
   }
 
   endDrag() {
+    const drag = this._drag;
     this._drag = null;
+    if (!drag || !drag.hoverEl) {
+      return;
+    }
+    // The renderer only recomputes node hover on pointer movement. After a drag
+    // that ends on a node the pointer is stationary, so hover stays stale until
+    // the cursor leaves and re-enters. Nudge it with a synthetic move at the
+    // current cursor position, after the pan's render settles (rAF).
+    const el = drag.hoverEl;
+    const x = drag.lastX;
+    const y = drag.lastY;
+    requestAnimationFrame(() => {
+      const opts = { clientX: x, clientY: y, bubbles: true, cancelable: true, view: window };
+      try {
+        el.dispatchEvent(new PointerEvent("pointermove", { ...opts, pointerType: "mouse" }));
+      } catch (e) {}
+      el.dispatchEvent(new MouseEvent("mousemove", opts));
+    });
   }
 
   addZoomControls(container, renderer) {
