@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   panSpeed: 1.0,
   zoomSpeed: 1.0,
   zoomToCursor: true,
+  shiftDragPan: true,
   invertX: false,
   invertY: false,
   showZoomButtons: true,
@@ -28,6 +29,14 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     this.addSettingTab(new GraphScrollPanSettingTab(this.app, this));
+
+    // Shift + drag pans the graph (grabs the background, even over a node). The
+    // move/up handlers live on the window so a drag keeps working if the pointer
+    // leaves the view.
+    this.registerDomEvent(window, "pointermove", (e) => this.onDragMove(e));
+    this.registerDomEvent(window, "pointerup", () => this.endDrag());
+    this.registerDomEvent(window, "pointercancel", () => this.endDrag());
+    this.registerDomEvent(window, "blur", () => this.endDrag());
 
     // Patch graphs that are already open as well as any opened later.
     this.app.workspace.onLayoutReady(() => this.patchAllGraphLeaves());
@@ -70,10 +79,26 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
     const handler = (e) => this.onWheel(e, renderer);
     target.addEventListener("wheel", handler, { capture: true, passive: false });
 
+    // Shift + drag → start a pan and stop the graph from grabbing a node.
+    const onPointerDown = (e) => this.onDragStart(e, renderer);
+    target.addEventListener("pointerdown", onPointerDown, { capture: true });
+
+    // The graph's native drag (node move / pan) is mouse-event driven, so also
+    // swallow a Shift+mousedown to keep it from running alongside our pan.
+    const onMouseDown = (e) => {
+      if (this.settings.shiftDragPan && e.shiftKey && (e.button == null || e.button === 0)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    };
+    target.addEventListener("mousedown", onMouseDown, { capture: true });
+
     view._graphScrollPanPatched = true;
 
     const cleanup = () => {
       target.removeEventListener("wheel", handler, { capture: true });
+      target.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      target.removeEventListener("mousedown", onMouseDown, { capture: true });
       delete view._graphScrollPanPatched;
     };
     view._graphScrollPanCleanup = cleanup;
@@ -139,6 +164,46 @@ module.exports = class GraphScrollPanPlugin extends Plugin {
 
     renderer.setPan(renderer.panX - dx, renderer.panY - dy);
     renderer.changed();
+  }
+
+  // Hold Shift and drag to grab the background and pan it — the point under the
+  // cursor follows the cursor. Works anywhere, even over a node.
+  onDragStart(e, renderer) {
+    if (!this.settings.shiftDragPan || !e.shiftKey) {
+      return;
+    }
+    if (e.button != null && e.button !== 0) {
+      return;
+    }
+    if (!renderer.px) {
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    this._drag = { renderer, lastX: e.clientX, lastY: e.clientY };
+  }
+
+  onDragMove(e) {
+    const drag = this._drag;
+    if (!drag) {
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const dx = (e.clientX - drag.lastX) * dpr;
+    const dy = (e.clientY - drag.lastY) * dpr;
+    if (dx === 0 && dy === 0) {
+      return;
+    }
+    drag.lastX = e.clientX;
+    drag.lastY = e.clientY;
+    const r = drag.renderer;
+    // Move the content with the cursor so the grabbed point stays under it.
+    r.setPan(r.panX + dx, r.panY + dy);
+    r.changed();
+  }
+
+  endDrag() {
+    this._drag = null;
   }
 
   addZoomControls(container, renderer) {
@@ -224,6 +289,18 @@ class GraphScrollPanSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.zoomToCursor)
           .onChange(async (value) => {
             this.plugin.settings.zoomToCursor = value;
+            await this.plugin.saveData(this.plugin.settings);
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Shift-drag to pan")
+      .setDesc("Hold Shift and drag to pan the graph from anywhere, without grabbing a node.")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.shiftDragPan)
+          .onChange(async (value) => {
+            this.plugin.settings.shiftDragPan = value;
             await this.plugin.saveData(this.plugin.settings);
           })
       );
