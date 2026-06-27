@@ -13,7 +13,6 @@ By default, scrolling over the graph view zooms in and out, and panning requires
 | Gesture | Action |
 | --- | --- |
 | Scroll / two-finger swipe | Pan (move the graph) |
-| Shift + drag | Pan (grab the background, even over a node) |
 | Pinch | Zoom in / out |
 | Cmd/Ctrl + scroll | Zoom in / out |
 
@@ -28,7 +27,6 @@ Works in both the global **Graph view** and the **Local graph** view.
 - **Pan speed** — multiplier for how far the graph moves per scroll (default `1.0`).
 - **Zoom speed** — multiplier for pinch and `Cmd`/`Ctrl` + scroll zoom; raise it if pinch feels too slow (default `1.0`).
 - **Zoom to cursor** — zoom toward the mouse pointer instead of the view center (default on).
-- **Shift-drag to pan** — hold `Shift` and drag to pan from anywhere, without grabbing a node (default on).
 - **Invert horizontal** — flip the horizontal pan direction.
 - **Invert vertical** — flip the vertical pan direction.
 - **Show zoom buttons** — show the `+` / `−` buttons over the graph (default on).
